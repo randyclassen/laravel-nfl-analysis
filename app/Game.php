@@ -12,8 +12,14 @@ class Game extends Model
         'point_difference',
         'home_win',
         'latitude_difference',
+        'pass_yards_difference',
+        'rush_yards_difference',
+        'latitude difference',
+        'penalties_difference',
         'home_team_win_pct',
         'away_team_win_pct',
+        'home_team_home_win_pct',
+        'away_team_away_win_pct',
     ];
     protected $dates = [
         'date_time',
@@ -44,6 +50,21 @@ class Game extends Model
         return $this->home_points - $this->away_points;
     }
 
+    public function getRushYardsDifferenceAttribute()
+    {
+        return $this->home_rush_yards - $this->away_rush_yards;
+    }
+
+    public function getPassYardsDifferenceAttribute()
+    {
+        return $this->home_pass_yards - $this->away_pass_yards;
+    }
+
+    public function getPenaltiesDifferenceAttribute()
+    {
+        return $this->home_penalties - $this->away_penalties;
+    }
+
     public function getHomeWinAttribute()
     {
         return (int) ($this->home_points > $this->away_points);
@@ -51,16 +72,22 @@ class Game extends Model
 
     public function getHomeTeamWinPctAttribute()
     {
-        $record = $this->homeRecord->where('year', $this->season)->first();
-
-        return 100 * $record->wins / ($record->wins + $record->losses);
+        return $this->homeTeam->winPct($this->season);
     }
 
     public function getAwayTeamWinPctAttribute()
     {
-        $record = $this->awayRecord->where('year', $this->season)->first();
+        return $this->awayTeam->winPct($this->season);
+    }
 
-        return 100 * $record->wins / ($record->wins + $record->losses);
+    public function getHomeTeamHomeWinPctAttribute()
+    {
+        return $this->homeTeam->homeWinPct($this->season);
+    }
+
+    public function getAwayTeamAwayWinPctAttribute()
+    {
+        return $this->awayTeam->awayWinPct($this->season);
     }
 
     public function getLatitudeDifferenceAttribute()

@@ -19,26 +19,40 @@ class ExportNFL extends Command
     public function handle()
     {
 dd(Game::pluck('roof')->unique());
-        $gamesPlayoffs = Game::whereYear('date_time', '>=', '2014')
+        $responses = [
+            'home_win',
+            'point_difference',
+        ];
+
+        $predictors = [
+            'date_time',
+            'home_pass_yards',
+            'away_pass_yards',
+            'pass_yards_difference',
+            'home_rush_yards',
+            'away_rush_yards',
+            'rush_yards_difference',
+            'travel_distance',
+            'roof',
+            'temperature',
+            'latitude difference',
+            'penalties_difference',
+            'home_team_win_pct',
+            'away_team_win_pct',
+            'home_team_home_win_pct',
+            'away_team_away_win_pct',
+        ];
+
+        $gamesPlayoffs = Game::select($responses + $predictors)
+            ->whereYear('date_time', '>=', '2014')
             ->whereMonth('date_time', '01')
             ->get();
-        
-        /*
-            Predictors:
-            - passing yards
-            - rushing yards
-            - travel distance
-            - team ending record (or home team home win pct and away team away win pct)
-            - latitude difference
-            - game date
-            - stadium type
-            
-            Responses:
-            - point difference
-            - home win
-
-        */
-        
+dd($gamesPlayoffs);
+        $gamesRegular = Game::select($responses + $predictors)
+            ->whereYear('date_time', '2018')
+            ->whereMonth('date_time', '>', '07')
+            ->get();
+dd($gamesRegular);
     }
 
 }
