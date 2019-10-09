@@ -45,7 +45,7 @@ class CrawlGames extends Command
 
         foreach ($this->gameUrls as $url) { 
             $this->crawlGame($url);
-            sleep(2);
+            usleep(500000);
         }
     }
 
@@ -80,13 +80,14 @@ class CrawlGames extends Command
             $homeLongitude = $homeTeam->stadium->longitude;
             $homeLatitude = $homeTeam->stadium->latitude;
 
-            Game::updateOrCreate([
+            $game = Game::updateOrCreate([
                 'date_time' => Carbon::parse($date . $time)->toDateTimeString(),
                 'home_team_id' => $homeTeam->id,
                 'away_team_id' => $awayTeam->id,
             ], [
                 'roof' => trim(Str::after(Str::before($pageText, 'Surface'), 'Roof')),
                 'travel_distance' => Distances::getTravelDistance($awayLongitude, $awayLatitude, $homeLongitude, $homeLatitude),
+                'temperature' => (int) trim(Str::after(Str::before($pageText, 'degrees'), 'Weather')),
                 'home_points' => (int) $baseCrawler->filter('.scorebox')->filter('.score')->first()->text(),
                 'away_points' => (int) $baseCrawler->filter('.scorebox')->filter('.score')->last()->text(),
                 'home_rush_yards' => $homeTotalYards - $homePassYards,
@@ -95,6 +96,7 @@ class CrawlGames extends Command
                 'away_pass_yards' => $awayPassYards,
                 'home_penalties' => Str::before($crawler->filter('#team_stats > tbody:nth-child(4) > tr:nth-child(9) > td:nth-child(3)')->text(), '-'),
                 'away_penalties' => Str::before($crawler->filter('#team_stats > tbody:nth-child(4) > tr:nth-child(9) > td:nth-child(2)')->text(), '-'),
+                'url' => $url,
             ]);
         }
     }
