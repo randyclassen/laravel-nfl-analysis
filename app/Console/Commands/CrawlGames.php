@@ -31,7 +31,7 @@ class CrawlGames extends Command
     {
         $baseUrl = 'https://www.pro-football-reference.com';
 
-        foreach (range(2014, 2018) as $year) {
+        foreach ([2019] as $year) {
             $crawler = $this->client->request('GET', 'https://www.pro-football-reference.com/years/' . $year . '/games.htm');
 
             $crawler->filter('#games > tbody')->filter('tr')->each(function ($tr, $i) use ($baseUrl) {
@@ -68,7 +68,9 @@ class CrawlGames extends Command
         if ($homeTeam && $awayTeam && $stadium) {
             $date = $this->getDateFromHeader($baseCrawler->filter('h1')->text());
             $time = Str::after(Str::before($baseCrawler->filter('.scorebox_meta')->text(), 'Stadium:'), 'Start Time:');
-                
+            
+            $roof = trim(Str::after(Str::before($pageText, 'Surface'), 'Roof'));
+
             $homeTotalYards = (int) $crawler->filter('#team_stats > tbody:nth-child(4) > tr:nth-child(6) > td:nth-child(3)')->text();
             $awayTotalYards = (int) $crawler->filter('#team_stats > tbody:nth-child(4) > tr:nth-child(6) > td:nth-child(2)')->text();
     
@@ -85,9 +87,10 @@ class CrawlGames extends Command
                 'home_team_id' => $homeTeam->id,
                 'away_team_id' => $awayTeam->id,
             ], [
-                'roof' => trim(Str::after(Str::before($pageText, 'Surface'), 'Roof')),
+                'week' => $crawler->filter('div.game_summaries:nth-child(1) > h2:nth-child(1) > a:nth-child(1)')->text(),
                 'travel_distance' => Distances::getTravelDistance($awayLongitude, $awayLatitude, $homeLongitude, $homeLatitude),
-                'temperature' => (int) trim(Str::after(Str::before($pageText, 'degrees'), 'Weather')),
+                'roof' => ($roof == 'outdoors') ? $roof : 'indoors',
+                'temperature' => ($roof == 'outdoors') ? (int) trim(Str::after(Str::before($pageText, 'degrees'), 'Weather')) : null,
                 'home_points' => (int) $baseCrawler->filter('.scorebox')->filter('.score')->first()->text(),
                 'away_points' => (int) $baseCrawler->filter('.scorebox')->filter('.score')->last()->text(),
                 'home_rush_yards' => $homeTotalYards - $homePassYards,

@@ -10,9 +10,4 @@ class Stadium extends Model
     protected $table = 'stadiums';
     protected $guarded = [];
 
-    public function getTypeAttribute()
-    {
-        // if ()
-        // return 
-    }
 }

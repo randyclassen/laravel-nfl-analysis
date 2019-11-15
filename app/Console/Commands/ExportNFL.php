@@ -3,14 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Game;
-use App\Team;
-use App\Stadium;
-use Carbon\Carbon;
-use Goutte\Client;
-use App\Services\Distances;
-use Illuminate\Support\Str;
+use App\Exports\NFLGamesExport;
 use Illuminate\Console\Command;
-use Symfony\Component\DomCrawler\Crawler;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExportNFL extends Command
 {
@@ -18,41 +13,25 @@ class ExportNFL extends Command
 
     public function handle()
     {
-dd(Game::pluck('roof')->unique());
-        $responses = [
-            'home_win',
-            'point_difference',
-        ];
+        $yearFrom = 2017;
+        $yearTo = 2018;
+        $games = Game::where('week', 'like', 'Week%')
+            ->whereYear('date_time', '>=', $yearFrom)
+            ->whereYear('date_time', '<=', $yearTo)
+            ->get()
+            ->whereBetween('season', [$yearFrom, $yearTo]);
 
-        $predictors = [
-            'date_time',
-            'home_pass_yards',
-            'away_pass_yards',
-            'pass_yards_difference',
-            'home_rush_yards',
-            'away_rush_yards',
-            'rush_yards_difference',
-            'travel_distance',
-            'roof',
-            'temperature',
-            'latitude difference',
-            'penalties_difference',
-            'home_team_win_pct',
-            'away_team_win_pct',
-            'home_team_home_win_pct',
-            'away_team_away_win_pct',
-        ];
+        Excel::store(new NFLGamesExport($games), 'games.xlsx');
+        
+        $test = $games->random(75);
+        $train = $games->diff($test);
 
-        $gamesPlayoffs = Game::select($responses + $predictors)
-            ->whereYear('date_time', '>=', '2014')
-            ->whereMonth('date_time', '01')
-            ->get();
-dd($gamesPlayoffs);
-        $gamesRegular = Game::select($responses + $predictors)
-            ->whereYear('date_time', '2018')
-            ->whereMonth('date_time', '>', '07')
-            ->get();
-dd($gamesRegular);
+        Excel::store(new NFLGamesExport($test), 'test-games.xlsx');
+        Excel::store(new NFLGamesExport($train), 'train-games.xlsx');
+
+        dump($test->count() . ' testing rows exported.');
+        dump($train->count() . ' training rows exported.');
+        dd($games->count() . ' rows exported.');
     }
 
 }
